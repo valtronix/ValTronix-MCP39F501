@@ -1,11 +1,10 @@
-# Arduino-library-template
-This is a template to create Arduino library
+# ValTronix MCP39F501 Library
 
-This is a library for the *XXX*
+This is a library for the MCP39F501 Energy Monitor sensor.
 
-Designed specifically to work with the *XXX* ----> *http://www.valtronix.com/xxx*
+Designed specifically to work with the VTM0001-EnergyMonitor ----> https://github.com/vmarzlin/ValTronix-VTM0001-EnergyMonitor
 
-These does *XXX*
+These enables your Arduino to communicate with the MCP39F501 Energy Monitor sensor to read the voltage, current, energy, etc. and to configure alarms.
 
 Check out the links above for our tutorials and wiring diagrams.
 
@@ -14,6 +13,6 @@ ValTronix invests time and resources providing this open source code, please sup
 Written by ValTronix.
 MIT license, all text above must be included in any redistribution
 
-To download. click the DOWNLOAD ZIP button, rename the uncompressed folder *XXX*. Check that the *XXX* folder contains *XXX.cpp* and *XXX.h*
+To download. click the DOWNLOAD ZIP button, rename the uncompressed folder ValTronix-MCP39F501. Check that the ValTronix-MCP39F501 folder contains ValTronix-MCP39F501.cpp and ValTronix-MCP39F501.h.
 
-Place the *XXX* library folder your arduinosketchfolder/libraries/ folder. You may need to create the libraries subfolder if its your first library. Restart the IDE.
+Place the ValTronix-MCP39F501 library folder your arduinosketchfolder/libraries/ folder. You may need to create the libraries subfolder if its your first library. Restart the IDE.
