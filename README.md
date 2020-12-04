@@ -19,4 +19,4 @@ Place the ValTronix-MCP39F501 library folder your arduinosketchfolder/libraries/
 
 ## References
 
-This library is based on the [Microship MCP39F501 datasheet version A](https://ww1.microchip.com/downloads/en/DeviceDoc/20005256A.pdf) and the (errata)[https://ww1.microchip.com/downloads/en/DeviceDoc/80000675A.pdf].
+This library is based on the [Microship MCP39F501 datasheet version A](https://ww1.microchip.com/downloads/en/DeviceDoc/20005256A.pdf) and the [errata](https://ww1.microchip.com/downloads/en/DeviceDoc/80000675A.pdf).
