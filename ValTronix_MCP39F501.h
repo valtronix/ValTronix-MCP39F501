@@ -23,7 +23,7 @@
 #include "Arduino.h"
 
 /* Uncomment to enable printing out nice debug messages. */
-//#define VALTRONIX_MCP39F501_DEBUG
+#define VALTRONIX_MCP39F501_DEBUG
 
 #define DEBUG_PRINTER                                                          \
   Serial /**< Define where debug output will be printed.                       \
@@ -54,6 +54,19 @@
 #define MCP39F501_INBAD 0x07
 #define MCP39F501_INSIZE 0x08
 
+
+#define MCP39F501_EV_OC 0x8000
+#define MCP39F501_EV_OV 0x4000
+#define MCP39F501_EV_OP 0x2000
+#define MCP39F501_EV_UV 0x1000
+#define MCP39F501_EV_OF 0x0800
+#define MCP39F501_EV_UF 0x0400
+#define MCP39F501_EV_OT 0x0200
+#define MCP39F501_EV_UT 0x0100
+#define MCP39F501_EV_VSA 0x0080
+#define MCP39F501_EV_VSU 0x0040
+
+
 /*!
  * @brief Main ValTronix_MCP39F501 class
  */
@@ -71,6 +84,17 @@ public:
   bool readVersion();
   bool refresh();
   bool digitalRead(uint8_t port);
+  void setDioRegister(uint8_t dio0, uint8_t dio1, uint8_t dio2, uint8_t dio3);
+  uint16_t getEnableEvents();
+  void setEnableEvents(uint16_t events);
+  uint16_t readEvents();
+  void testEvents(uint16_t events);
+  void clearEvents(uint16_t events);
+  uint16_t getCriticalMask();
+  void setCriticalMask(uint16_t events);
+  uint16_t getStandardMask();
+  void setStandardMask(uint16_t events);
+  
   char* systemVersion;
   uint32_t currentRms;
   uint16_t voltageRms;
@@ -86,8 +110,12 @@ private:
   uint8_t sendFrame(uint8_t expectedLength);
   void write(uint8_t data);
   void read16(uint16_t addr);
+  void write16(uint16_t addr, uint16_t data);
   void read32(uint16_t addr);
+  void write32(uint16_t addr, uint32_t data);
   void readBytes(uint16_t addr, uint8_t length);
+  uint16_t getRegister16(uint16_t addr);
+  void setRegister16(uint16_t addr, uint16_t data);
   uint8_t crc(uint8_t *buf, int length);
   void save();
   void readPage(uint8_t addr);
