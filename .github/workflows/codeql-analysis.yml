@@ -53,6 +53,8 @@ jobs:
     #  uses: github/codeql-action/autobuild@v1
     - name: Build
       uses: arduino/actions/libraries/compile-examples@master
+      with:
+        fqbn: arduino:avr:mega 
       
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 https://git.io/JvXDl
