@@ -45,7 +45,11 @@ bool ValTronix_MCP39F501::begin() {
    * total of 10 bits per byte.
    */
 	_serial->begin(4800, SERIAL_8N1);
-	return readVersion();	
+	delay(10);
+	bool ok = readVersion();
+	DEBUG_PRINT("Initialisation MCP39F501...");
+	DEBUG_PRINTLN(systemVersion);
+	return ok;	
 }
 
 bool ValTronix_MCP39F501::readVersion()
@@ -56,11 +60,11 @@ bool ValTronix_MCP39F501::readVersion()
 	if (sendFrame(2) == MCP39F501_OK)
 	{
 		uint8_t i = bufin[2]>>4;
-		if (i > 10) systemVersion[2] = '1';
+		if (i > 9) systemVersion[2] = '1';
 		systemVersion[3] = '0' + (i%10);
 		systemVersion[0] = '2';
 		i = bufin[2] & 0x0f;
-		if (i > 10) systemVersion[5] = '1';
+		if (i > 9) systemVersion[5] = '1';
 		systemVersion[6] = '0' + (i%10);
 		i = bufin[3]>>4;
 		systemVersion[8] = '0' + (bufin[3]>>4);
@@ -73,23 +77,107 @@ bool ValTronix_MCP39F501::readVersion()
 	}
 }
 
+void ValTronix_MCP39F501::setDioRegister(uint8_t dio0, uint8_t dio1, uint8_t dio2, uint8_t dio3)
+{
+	dio0 &= 0x07;
+	dio1 &= 0x07;
+	dio2 &= 0x07;
+	dio3 &= 0x07;
+	uint16_t reg = dio3<<9 | dio2<<6 | dio1<<3 | dio0;
+	beginFrame();
+	write16(0x0046, reg);
+	sendFrame(0);
+}
+
+uint16_t ValTronix_MCP39F501::getEnableEvents()
+{
+	return getRegister16(0x008a);
+}
+
+void ValTronix_MCP39F501::setEnableEvents(uint16_t events)
+{
+	setRegister16(0x008a, events);
+}
+
+void ValTronix_MCP39F501::testEvents(uint16_t events)
+{
+	setRegister16(0x0090, events);
+}
+
+void ValTronix_MCP39F501::clearEvents(uint16_t events)
+{
+	setRegister16(0x0092, events);
+}
+
+uint16_t ValTronix_MCP39F501::readEvents()
+{
+	return getRegister16(0x001c);
+}
+
+uint16_t ValTronix_MCP39F501::getCriticalMask()
+{
+	return getRegister16(0x008c);
+}
+
+void ValTronix_MCP39F501::setCriticalMask(uint16_t events)
+{
+	setRegister16(0x008c, events);
+}
+
+uint16_t ValTronix_MCP39F501::getStandardMask()
+{
+	return getRegister16(0x008e);
+}
+
+void ValTronix_MCP39F501::setStandardMask(uint16_t events)
+{
+	setRegister16(0x008e, events);
+}
+
 
 bool ValTronix_MCP39F501::refresh()
 {
 	beginFrame();
 	readBytes(0x0004, 28);
-	if (sendFrame(28) == MCP39F501_OK)
+	uint8_t rc = sendFrame(28);
+	DEBUG_PRINT("sendFrame rc=");
+	DEBUG_PRINTLN(rc);
+	if (rc == MCP39F501_OK)
 	{
-		currentRms = bufin[0]<<24 + bufin[1]<<16 + bufin[2]<<8 + bufin[3];
-		voltageRms = bufin[4]<<8 + bufin[5];
-		activePower = bufin[6]<<24 + bufin[7]<<16 + bufin[8]<<8 + bufin[9];
-		reactivePower = bufin[10]<<24 + bufin[11]<<16 + bufin[12]<<8 + bufin[13];
-		apparentPower = bufin[14]<<24 + bufin[15]<<16 + bufin[16]<<8 + bufin[17];
-		powerFactor = bufin[18]<<8 + bufin[19];
-		lineFrequency = bufin[20]<<8 + bufin[21];
-		thermistorVoltage = bufin[22]<<8 + bufin[23];
-		eventFlag = bufin[24]<<8 + bufin[25];
-		systemStatus = bufin[27];
+		currentRms = ((uint32_t)bufin[5])<<24 | ((uint32_t)bufin[4])<<16 | ((uint32_t)bufin[3])<<8 | bufin[2];
+		//currentRms = (uint32_t)bufin[5];
+		//currentRms = currentRms<<8 | (uint32_t)bufin[4];
+		//currentRms = currentRms<<8 | (uint32_t)bufin[3];
+		//currentRms = currentRms<<8 | (uint32_t)bufin[2];
+		DEBUG_PRINT("Current RMS: ");
+		DEBUG_PRINTLN(currentRms);
+		voltageRms = ((uint16_t)bufin[7]<<8) | (uint16_t)bufin[6];
+		DEBUG_PRINT("Voltage RMS:");
+		DEBUG_PRINTLN(voltageRms);
+		activePower = bufin[11]<<24 | bufin[10]<<16 | bufin[9]<<8 | bufin[8];
+		DEBUG_PRINT("Active power:");
+		DEBUG_PRINTLN(activePower);
+		reactivePower = bufin[15]<<24 | bufin[14]<<16 | bufin[13]<<8 | bufin[12];
+		DEBUG_PRINT("Reactive power:");
+		DEBUG_PRINTLN(reactivePower);
+		apparentPower = bufin[19]<<24 | bufin[18]<<16 | bufin[17]<<8 | bufin[16];
+		DEBUG_PRINT("Apparent power:");
+		DEBUG_PRINTLN(apparentPower);
+		powerFactor = ((int16_t)bufin[21])<<8 | (int16_t)bufin[20];
+		DEBUG_PRINT("Power factor:");
+		DEBUG_PRINTLN(powerFactor);
+		lineFrequency = ((uint16_t)bufin[23]<<8) | (uint16_t)bufin[22];
+		DEBUG_PRINT("Line frequency:");
+		DEBUG_PRINTLN(lineFrequency);
+		thermistorVoltage = ((uint16_t)bufin[25]<<8) | (uint16_t)bufin[24];
+		DEBUG_PRINT("Thermistor voltage:");
+		DEBUG_PRINTLN(thermistorVoltage);
+		eventFlag = bufin[27]<<8 | bufin[26];
+		DEBUG_PRINT("Event flag:");
+		DEBUG_PRINTLN(eventFlag, BIN);
+		systemStatus = bufin[29]<<8 | bufin[28];
+		DEBUG_PRINT("System status:");
+		DEBUG_PRINTLN(systemStatus, BIN);
 		return true;
 	}
 	else
@@ -102,6 +190,29 @@ bool ValTronix_MCP39F501::digitalRead(uint8_t port)
 {
 	port = port%4;
 	return ((systemStatus>>3) & (1<<port)) != 0;
+}
+
+
+
+uint16_t ValTronix_MCP39F501::getRegister16(uint16_t addr)
+{
+	beginFrame();
+	read16(addr);
+	if (sendFrame(2) == MCP39F501_OK)
+	{
+		return bufin[2]<<8 | bufin[3];
+	}
+	else
+	{
+		return 0xffff;
+	}
+}
+
+void ValTronix_MCP39F501::setRegister16(uint16_t addr, uint16_t data)
+{
+	beginFrame();
+	write16(addr, data);
+	sendFrame(0);
 }
 
 void ValTronix_MCP39F501::beginFrame() {
@@ -122,59 +233,114 @@ uint8_t ValTronix_MCP39F501::sendFrame(uint8_t expectedLength) {
 		bufout[len] = crc(bufout, len);
 		_serial->write(bufout, bufout[1]);
 	}
-	DEBUG_PRINTER.print("Envoi du buffer:");
+	DEBUG_PRINT("Envoi du buffer:");
 	for (int j=0; j<bufout[1]; j++)
 	{
-		DEBUG_PRINTER.print(" 0x");
-		DEBUG_PRINTER.print(bufout[j], HEX);
+		DEBUG_PRINT(" 0x");
+		DEBUG_PRINT(bufout[j], HEX);
 	}
-	DEBUG_PRINTER.print("... ");
 	_serial->flush();
-	uint8_t i = 20;
-	while(!_serial->available())
+	DEBUG_PRINTLN(" OK");
+
+	DEBUG_PRINT("Reception :");
+	uint8_t rc = MCP39F501_OK;
+	uint8_t idx = 0;
+    bool waiting = true;
+	while (waiting)
 	{
-		delay(5);
-		i--;
-		if (i==0)
+		uint8_t i = 20;
+		DEBUG_PRINT('<');
+		while(waiting && !_serial->available())
 		{
-			DEBUG_PRINTER.println(" Timeout");
-			return MCP39F501_TIMEOUT;
+			DEBUG_PRINT('*');
+			if ((expectedLength == 0) && (idx == 1))
+			{
+//				rc = MCP39F501_OK;
+				waiting = false;
+			}
+			else if (idx >= (expectedLength + 2))
+			{
+				if (bufin[1] != idx)
+				{
+					DEBUG_PRINT(" Bad size");
+					rc = MCP39F501_INSIZE;
+				}
+				waiting = false;
+			}
+			else
+			{
+				DEBUG_PRINT('.');
+				delay(5);
+				i--;
+				if (i == 0)
+				{
+					waiting = false;
+					if (rc == MCP39F501_OK)
+					{
+						rc = MCP39F501_TIMEOUT;
+						DEBUG_PRINT(" Timeout");
+					}
+				}
+			}
+		}
+		DEBUG_PRINTLN('>');
+		DEBUG_PRINT("<<");
+		while (_serial->available() > 0)
+		{
+			DEBUG_PRINT('*');
+			uint8_t b = _serial->read();
+			if (rc == MCP39F501_OK)
+			{
+				if (idx < sizeof(bufin))
+				{
+					bufin[idx++] = b;
+					DEBUG_PRINT(" 0x");
+					DEBUG_PRINT(b, HEX);
+					if (i == 1)
+					{
+						switch (b)
+						{
+							case 0x51: // CSFAIL
+								DEBUG_PRINT(" CSFAIL");
+								rc = MCP39F501_CSFAIL;
+								break;
+							case 0x06: // ACK
+								DEBUG_PRINT(" ACK");
+								break;
+							default:   // Unexpected
+								DEBUG_PRINT(" ?!?");
+								rc = MCP39F501_INBAD;
+								break;
+						}
+					}
+				}
+				else
+				{
+					DEBUG_PRINT(" Overflow");
+					rc = MCP39F501_INOVFLOW;
+				}
+			}
+		}
+		DEBUG_PRINT(">>");
+	}
+	
+	if (rc == MCP39F501_OK)
+	{
+		if ((idx > 1) && (crc(bufin, bufin[1] - 1) != bufin[idx - 1]))
+		{
+			DEBUG_PRINT(" Bad Checksum");
+			rc = MCP39F501_BADCSUM;
+		}
+		else
+		{
+			DEBUG_PRINT(" Ok");
 		}
 	}
-	DEBUG_PRINTER.println();
-	DEBUG_PRINTER.print("Reception :");
-	i = 0;
-	while (_serial->available() > 0)
-	{
-		if (i == sizeof(bufin))
-		{
-			DEBUG_PRINTER.println("Overflow");
-			return MCP39F501_INOVFLOW;
-		}
-		bufin[i] = _serial->read();
-		DEBUG_PRINTER.print(" 0x");
-		DEBUG_PRINTER.print(bufout[i], HEX);
-		i++;
-	}
-	if (bufin[0] == 0x51)
-	{ // CSFAIL
-		DEBUG_PRINTER.println(" CSFAIL");
-		return MCP39F501_CSFAIL;
-	}
-	else if (bufin[0] != 0x06)
-	{  // Unexpected
-		DEBUG_PRINTER.println(" ?!?");
-		return MCP39F501_INBAD;
-	}
-	// ACK
-	DEBUG_PRINTER.println(" ACK");
-	if ((expectedLength == 0) && (i == 1)) return MCP39F501_OK;
-	if ((i < 2) || (bufin[1] != i)) return MCP39F501_INSIZE;
-	if (i < (expectedLength + 2)) return MCP39F501_TOOSHORT;
-	if (i > (expectedLength + 2)) return MCP39F501_TOOLONG;
-	if (crc(bufin, bufin[1] - 1) != bufin[i - 1]) return MCP39F501_BADCSUM;
+	DEBUG_PRINTLN();
 	bufout[1] = 0;
-	return MCP39F501_OK;
+	DEBUG_PRINT("Retour de sendFrame: ");
+	DEBUG_PRINTLN(rc);
+	return rc;
 }
 
 uint8_t ValTronix_MCP39F501::crc(uint8_t *buf, int length)
@@ -184,6 +350,9 @@ uint8_t ValTronix_MCP39F501::crc(uint8_t *buf, int length)
 	{
 		crc += buf[i];
 	}
+	DEBUG_PRINT(" [0x");
+	DEBUG_PRINT(crc, HEX);
+	DEBUG_PRINT("]");
 	return crc;
 }
 
@@ -195,12 +364,34 @@ void ValTronix_MCP39F501::read16(uint16_t addr)
 	write(0x52);			// Register Read, 16 bits
 }
 
+void ValTronix_MCP39F501::write16(uint16_t addr, uint16_t data)
+{
+	write(0x41);			// Set Address Pointer
+	write(highByte(addr));
+	write(lowByte(addr));
+	write(0x57);			// Register Write, 16 bits
+	write(highByte(data));
+	write(lowByte(data));
+}
+
 void ValTronix_MCP39F501::read32(uint16_t addr)
 {
 	write(0x41);			// Set Address Pointer
 	write(highByte(addr));
 	write(lowByte(addr));
 	write(0x44);			// Register Read, 32 bits
+}
+
+void ValTronix_MCP39F501::write32(uint16_t addr, uint32_t data)
+{
+	write(0x41);			// Set Address Pointer
+	write(highByte(addr));
+	write(lowByte(addr));
+	write(0x57);			// Register Write, 32 bits
+	write((data>>24) & 0xff);
+	write((data>>16) & 0xff);
+	write((data>>8) & 0xff);
+	write(data & 0xff);
 }
 
 void ValTronix_MCP39F501::readBytes(uint16_t addr, uint8_t length)
