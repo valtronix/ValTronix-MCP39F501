@@ -1,5 +1,7 @@
 # ValTronix MCP39F501 Library
 
+![Compile Examples](https://github.com/valtronix/ValTronix-MCP39F501/workflows/Compile%20Examples/badge.svg)
+
 This is a library for the MCP39F501, a 24-Bit Single Phase Power Monitoring IC.
 
 Designed specifically to work with the VTM0001-EnergyMonitor ----> https://github.com/vmarzlin/ValTronix-VTM0001-EnergyMonitor
