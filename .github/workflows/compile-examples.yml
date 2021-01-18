@@ -9,3 +9,5 @@ jobs:
        with:
          fetch-depth: 1
      - uses: arduino/actions/libraries/compile-examples@master
+       with:
+         fqbn: arduino:avr:mega
